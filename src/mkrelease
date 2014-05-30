@@ -1,0 +1,77 @@
+#!/bin/csh
+#
+#  mkrelease - Build a generic Trace Tuner premium release tarfile for each
+#              platform starting from the QAed executables, libraries, and
+#              sources.  Items specific for each customer (e.g. lookup tables
+#              or spreadsheets) can be sent as separate attachments.  The
+#              contants will need to be editted for each release.
+#            - MFM Oct-99
+#
+# mkrelease $Revision: 1.2 $
+#
+set echo
+set REL       		= ttuner2.0.9
+set PLATFORMS 		= (alphaev6-dec-osf4.0f sparc-sunos-5.6 x86-sunos-5.7 \
+			   x86-redhat-7.1 mips-irix-6.5)
+set REL_DIR   		= ..	
+set JAR_DIR   		= new-java	
+set HELP_DIR   		= /autohome/pcp/helpdocs/tt-2.0.9
+set README    		= README	
+set RELEASE_NOTES	= RELEASE_NOTES	
+set MAN_FILE  		= manuals/TraceTunerPremium2_0_9.pdf	
+
+#
+#   Make a directory for each platform contains the appro stuff.
+#
+foreach Platform ($PLATFORMS)
+    set DEST_DIR = $REL-$Platform
+    set TAR_FILE = $DEST_DIR.tar
+    rm -fr $DEST_DIR
+    mkdir  $DEST_DIR
+    mkdir  $DEST_DIR/help
+    rm -f  $TAR_FILE
+    rm -f  $TAR_FILE.Z
+    #
+    #   Copy in the API files
+    #    
+    cp -p $REL_DIR/src/example.mk                      $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/example.c            $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/Btk_qv.h             $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/Btk_qv_data.h        $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/Btk_qv_io.h          $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/Btk_default_table.h  $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/Btk_lookup_table.h   $DEST_DIR
+    cp -p $REL_DIR/src/compute_qv/Btk_compute_qv.h     $DEST_DIR
+    cp -p $REL_DIR/src/mktrain/Btk_match_data.h        $DEST_DIR
+    #
+    #   Copy in the script for license info
+    #    
+    cp -p get-license-info                	       $DEST_DIR
+    #
+    #   Copy in the library and ttuner executable
+    #    
+    cp -p $REL_DIR/rel/$Platform/ttuner                $DEST_DIR
+    cp -p $REL_DIR/lib/$Platform/libtt.a               $DEST_DIR
+    #
+    #   Copy in the .jar file for the viewer
+    #
+    cp -p $JAR_DIR/ttuner_tools.jar		       $DEST_DIR
+    #    
+    #
+    cp -p $REL_DIR/lib/$Platform/libtt.a               $DEST_DIR
+    #
+    #   Copy in the manual, README and RELEASE_NOTES file
+    #    
+    cp -p $MAN_FILE  		$DEST_DIR
+    cp -p $README    		$DEST_DIR
+    cp -p $RELEASE_NOTES    	$DEST_DIR
+    #
+    #   Copy in the online help files
+    #    
+    cp -pr $HELP_DIR/*		$DEST_DIR/help
+    #
+    #   Tar it up and compress.  We leave the tar directories for review.
+    #
+    tar cfv $TAR_FILE $DEST_DIR
+    compress $TAR_FILE
+end

@@ -1,0 +1,93 @@
+------------------------------------------------------------------------------
+README for directory src
+------------------------------------------------------------------------------
+This directory and its subdirectories contain the source code for TraceTuner. 
+
+The code is supposed to be used for building the following C executables 
+
+- ttuner                                      (subdirectory compute_qv),
+- train and trainphd                          (subdirectory mktrain),
+- lut                                         (subdirectory mklut),
+- checkbc, checkqv, checkbcphd and checkqvphd (subdirectory mkchk), 
+
+The executables can be used to perform the following tasks: 
+
+- ttuner: 
+  process one or more DNA traces, call (pure and/or mixed) bases from each 
+  trace, evaluate quality values of all the called bases, detect 
+  heterozygous indels in diploid samples and deconvolve the "mixed" 
+  electropherograms containing indels into pure electropherograms corresponding
+  to the long and short haplotype, and output the results in a variety of 
+  formats, including many PHRED-compatible formats;
+
+- train:
+  process one or more DNA traces, call reads from the traces, evaluate four 
+  predictors, or trace parameters, for each called base in a read, produce a 
+  local alignment of each called read against specified correct/reference 
+  sequence and output this alignment, together with the values of four 
+  predictors for each called base, in a text data file;
+
+- trainphd:
+  read bases and quality values from one or more PHD files, produce a local 
+  alignment of each read against specified correct/reference sequence and 
+  output this alignment, together with quality value for each called base, 
+  in a text data file;
+
+- lut:
+  take the alignment file produced by executable train as input and produce  
+  a customized lookup tables for evaluating quality values; this table
+  can be used by executable ttuner with -t option.
+
+- checkbc and checkbcphd:
+  check the accuracy of the base calls. These executables take as input
+  the alignment files produced by train and trainphd, respectively;
+
+- checkbc and checkbcphd:
+  check the accuracy of quality values.
+  
+Each subdirectory contains its own README file which describes the usage of the
+executables in more details.
+
+To compile the source code and build the executables on Unix/Linux platform, 
+type 'make". To compile the source code and build the executables in MS DOS
+environment, visit every source subdirectory, starting from compute_qv,
+and type 'pcmake'. 
+
+This directory also contains Java archive file ttuner_tools.jar, which 
+contains the Launcher and Viewer. These are described in the PDF file in 
+directory ../doc.  The Launcher was designed for PC users so that they 
+can run the basic TraceTuner options without using the MS-DOS command line.  
+It may be useful on UNIX/Linux as well as it lets you select input files, 
+run TraceTuner, and then immediately run the Viewer without having to specify 
+paths. 
+
+The Viewer shows the original traces, the original basecalls made by the
+ABI basecaller, and the revised basecalls and quality values supplied by
+TraceTuner. It requires sample file and PHD file to run.
+
+To use the Launcher, make sure the ttuner executable is in your path so
+the Launcher can find it.  Assuming Java 1.3 is in your path and that
+ttuner_tools.jar file is in your current directory, the command to start
+the Launcher is
+
+    java -jar ttuner_tools.jar -Dhelpdocs.dir="$TTHOME/help"
+
+where "TTHOME" is an environmental variable that should have been set up
+properly during the installation.
+
+To run the stand-alone Viewer on a single sample file / phd file combination
+the command would be
+
+    java -Dhelpdocs.dir="$TTHOME/help" -cp ttuner_tools.jar \
+     com.paracel.tt.run.TTView <sample-file> <phd-file>
+
+The Java tools need Java version 1.3 for the UNIX platform to be utilized.
+This TraceTuner distribution does not include Java for the UNIX platforms.
+If you want to use these tools on a UNIX platform, you need to download and
+install the appropriate distribution from
+
+    http://java.sun.com/
+
+=========================================================================
+Copyright (c) 1999-2003, Paracel, Inc.  All rights reserved.
+========================================================================

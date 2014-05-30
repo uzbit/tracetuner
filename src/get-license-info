@@ -1,0 +1,63 @@
+#! /usr/bin/env perl
+
+# Collect the machine-specific information needed to create a license
+# and write it to a file.
+
+# get-license-info $Revision: 1.2 $
+
+use Sys::Hostname;
+
+$INFO_FILE = "license.info";
+if ($#ARGV >= 0) {
+    $INFO_FILE = shift;
+}
+
+$HOSTNAME = hostname;
+$OS = `uname -s`; chomp($OS);
+
+print STDERR "Data will be written to file '$INFO_FILE'.\n";
+
+FindMAC: {
+    $OS eq 'SunOS' and do {
+	open(MAC, "/usr/sbin/arp $HOSTNAME |") or die "arp failed: $!";
+	last FindMAC; };
+    $OS eq 'Linux' and do {
+	open(MAC, "/sbin/ifconfig |") or die "ifconfig failed: $!";
+	last FindMAC; };
+    $OS eq 'OSF1' and do {
+        open(MAC, "/usr/sbin/netstat -i |") or die "netstat failed: $!";
+	last FindMAC; };
+    $OS eq 'IRIX' and do {
+	open(MAC, "/usr/etc/netstat -ia |") or die "netstat failed: $!";
+	last FindMAC; };
+    die "Unsupported operating system \"$OS\"";
+}
+while (<MAC>) {
+    m/([0-9A-Za-z][0-9A-Za-z]?:
+       [0-9A-Za-z][0-9A-Za-z]?:
+       [0-9A-Za-z][0-9A-Za-z]?:
+       [0-9A-Za-z][0-9A-Za-z]?:
+       [0-9A-Za-z][0-9A-Za-z]?:
+       [0-9A-Za-z][0-9A-Za-z]?)/x and do {
+	$MAC = $1;
+	last;
+    };
+}
+close(MAC) or die "MAC determination failed: $!";
+
+open(INFO_FILE, ">$INFO_FILE") or die "open $INFO_FILE for write failed: $!";
+print INFO_FILE <<EOF;
+TT			### Product
+2.0			### Version (major.minor)
+unlimited		### Time limit
+$MAC			### MAC
+0			### Port
+0			### Num CPUs
+$OS			### OS
+0			### Arbitrary integer
+$HOSTNAME		### Arbitrary string
+EOF
+
+close(INFO_FILE);
+
+exit(0);

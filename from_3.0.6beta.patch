@@ -1,0 +1,389 @@
+diff -rupN ../tracetuner_3.0.6beta/src//compute_qv/Btk_qv_io.c src//compute_qv/Btk_qv_io.c
+--- ../tracetuner_3.0.6beta/src//compute_qv/Btk_qv_io.c	2008-07-21 17:02:00.000000000 +0200
++++ src//compute_qv/Btk_qv_io.c	2010-10-18 14:47:24.859166002 +0200
+@@ -42,6 +42,7 @@
+ #include <sys/types.h>
+ #include <errno.h>
+ #include <float.h>
++#include <assert.h>
+ 
+ #include "ABI_Toolkit.h"
+ #include "SCF_Toolkit.h"
+@@ -1322,6 +1323,139 @@ release(Contig *consensus, Contig *conse
+     return SUCCESS;
+ }
+ 
++	/********************************************************************************
++	 * This function writes out a FASTQ file with the (potentially) recalled
++	 * bases.  Its synopsis is:
++	 *
++	 * success = Btk_output_fastq_file(file_name, path, called_bases, quality_values,
++	 *                  num_bases, verbose)
++	 *
++	 * where
++	 *	file_name	is the name of the sample file
++	 *	path		is the path name of the directory in which to write
++	 *			the .seq file, if any (NULL means current dir)
++	 *	called_bases	is an array of base calls
++	 *	quality_values	is an array of quality values
++	 *	num_bases	is the number of elements in called_bases
++	 *	verbose		is whether to write status messages to stderr, and
++	 *			how verbosely
++	 *
++	 *	success		is SUCCESS or ERROR
++	 ********************************************************************************
++	 */
++	int
++	Btk_output_fastq_file(
++						  int FastqType,
++						  char *file_name,
++						  char *path,
++						  char *multifastqFileName,
++						  char *called_bases, 
++						  int *quality_values,
++						  int num_bases,
++						  int left_trim_point,
++						  int right_trim_point,
++						  int verbose)
++	{
++		int i;
++		char qchar;
++		char *seq_name, fastq_file_name[MAXPATHLEN];
++		char sequence_string[MAX_BASES_LEN];
++		char quality_string[MAX_BASES_LEN];
++		FILE *fastq_out = NULL, *dir_out = NULL, *multi_out = NULL;
++		
++		/* Use the name of the sample file, sans path, as the sequence name. */
++#ifdef __WIN32
++		if ((seq_name = strrchr(file_name, '\\')) != NULL) {
++#else
++			if ((seq_name = strrchr(file_name, '/')) != NULL) {
++#endif
++				seq_name++;
++			}
++			else {
++				seq_name = file_name;
++			}
++			
++			assert( MAX_BASES_LEN >= num_bases + 1 );
++			/* Ignore any trailing N characters in called_bases */
++			strncpy( sequence_string, called_bases, num_bases );
++			sequence_string[num_bases] = 0;
++			/* fprintf(stderr, "Sequence string:\n%s\n", sequence_string); /* enable to print sequence string to stderr */
++			assert( num_bases == strlen(sequence_string) );
++			for(i=0;i<num_bases;i++)
++			{
++				/* Quality values are already integers */
++				/* Write a Sanger FASTQ file, PHRED scores with ASCII offset 33 */
++				qchar = 33 + quality_values[i];
++				assert( 33 <= qchar <= 126 );
++				quality_string[i] = qchar;
++			}
++			quality_string[num_bases] = 0; /* Explicit null terminator */
++			/* fprintf(stderr, "Quality string:\n%s\n", quality_string); /* enable to print quality string to stderr */
++			assert( num_bases == strlen(quality_string) );
++			assert( num_bases == strlen(sequence_string) );
++			assert( strlen(quality_string) == strlen(sequence_string) );
++			
++			if (FastqType & NAME_DIR) {
++#ifdef __WIN32
++				sprintf(fastq_file_name, "%s\\%s.fastq", path, seq_name);
++#else
++				sprintf(fastq_file_name, "%s/%s.fastq", path, seq_name);
++#endif
++				if ((dir_out = fopen(fastq_file_name, "w")) == NULL) {
++					error(fastq_file_name, "couldn't open", errno);
++					return ERROR;
++				}
++			}
++			
++			if (FastqType & NAME_FILES) {
++				sprintf(fastq_file_name, "%s.fastq", seq_name);
++				if ((fastq_out = fopen(fastq_file_name, "w")) == NULL) {
++					error(fastq_file_name, "couldn't open", errno);
++					return ERROR;
++				}
++			}
++			
++			if (FastqType & NAME_MULTI) {
++				if ((multi_out = fopen(multifastqFileName, "a")) == NULL) {
++					error(multifastqFileName, "couldn't open", errno);
++					fclose(fastq_out);
++					return ERROR;
++				}
++			}
++			
++			if (fastq_out) {
++				fprintf(fastq_out, "@%s %d %d %d\n%s\n+\n%s\n", seq_name, num_bases,
++						left_trim_point, right_trim_point - left_trim_point + 1,
++						sequence_string, quality_string);
++			}
++			
++			if (dir_out) {
++				fprintf(dir_out, "@%s %d %d %d\n%s\n+\n%s\n", seq_name, num_bases,
++						left_trim_point, right_trim_point - left_trim_point + 1,
++						sequence_string, quality_string);
++			}
++			
++			if (multi_out) {
++				fprintf(multi_out, "@%s %d %d %d\n%s\n+\n%s\n", seq_name, num_bases,
++						left_trim_point, right_trim_point - left_trim_point + 1,
++						sequence_string, quality_string);
++			}
++			
++			if (fastq_out) {
++				fclose(fastq_out);
++			}
++			
++			if (dir_out) {
++				fclose(dir_out);
++			}
++			
++			if (multi_out) {
++				fclose(multi_out);
++			}
++			
++			return SUCCESS;
++		}
++	
+ /********************************************************************************
+  * This function writes out a ".tal" file.
+  * Its synopsis is:
+diff -rupN ../tracetuner_3.0.6beta/src//compute_qv/Btk_qv_io.h src//compute_qv/Btk_qv_io.h
+--- ../tracetuner_3.0.6beta/src//compute_qv/Btk_qv_io.h	2008-07-21 17:02:00.000000000 +0200
++++ src//compute_qv/Btk_qv_io.h	2010-10-18 09:33:03.000000000 +0200
+@@ -127,6 +127,18 @@ Btk_output_phd_file(
+     float trim_threshold,
+     int verbose);
+ 
++extern int
++Btk_output_fastq_file(
++	int FastqType,
++	char *file_name,
++	char *path,
++	char *multiseqFileName,
++	char *called_bases, 
++	int *quality_values,
++	int num_bases,
++	int left_trim_point,
++	int right_trim_point,
++    int verbose);
+ 
+ extern int
+ Btk_output_fasta_file(
+diff -rupN ../tracetuner_3.0.6beta/src//compute_qv/main.c src//compute_qv/main.c
+--- ../tracetuner_3.0.6beta/src//compute_qv/main.c	2009-04-21 17:14:57.000000000 +0200
++++ src//compute_qv/main.c	2010-10-18 14:36:54.279166001 +0200
+@@ -82,6 +82,8 @@ static int FastaType;
+ static int OutputFourMultiFastaFiles;
+ static char MultiFastaFilesDirName[BUFLEN];
+ static char multiseqsFileName[BUFLEN];
++static char multiseqFileName[BUFLEN];
++static char multifastqFileName[BUFLEN];
+ static char multiqualFileName[BUFLEN];
+ static char multilocsFileName[BUFLEN];
+ static char multistatFileName[BUFLEN];
+@@ -98,6 +100,10 @@ static int OutputPhd;		/* whether to wri
+ static char PhdDirName[BUFLEN];	/* path of dir */
+ static int PhdType;
+ 
++static int OutputFastq;		/* whether to write .fastq files */
++static char FastqDirName[BUFLEN];	/* path of dir */
++static int FastqType;
++
+ static int OutputQual;		/* whether to write .qual files */
+ static char QualDirName[BUFLEN];	/* path of dir */
+ static int QualType;
+@@ -110,8 +116,6 @@ static struct Qual_data_struct {
+     int sum_number;               /* Totals to compute averages            */
+ } *Qual_data = NULL;
+ 
+-static char multiqualFileName[BUFLEN];
+-static char multiseqFileName[BUFLEN];
+ static int trim_window = 10;      /* width of trimming window */
+ static float trim_threshold = 20; /* when average of trim window goes above
+                                    * this, trimming stops 
+@@ -143,10 +147,11 @@ usage(int argc, char *argv[])
+     "    [ -t <lookup_table>   ][ -C <consensus_file>  ][ -cv3   ]\n"
+     "    [ -indel_detect ][ -indel_resolve ][ -indloc <loc> ][ -indsize <size> ]\n"
+     "    [ -3730 ][ -3700pop5 ][ -3700pop6 ][ -3100 ][ -mbace]\n"   
+-    "    [ -p    | -pd  <dir>  ][ -s | -sd <dir> ] [ -tal | -tald <dir> ]\n"    
+-    "    [ -q    | -qd  <dir>  ][ -c | -cd <dir> ] [ -tab | -tabd <dir> ]\n" 
+-    "    [ -d    | -dd  <dir>  ][ -qr     <file> ] [ -hpr | -hprd <dir> ]\n"
+-    "    [ -sa         <file>  ][ -qa     <file> ] [ -o           <dir> ]\n"
++    "    [ -p   | -pd   <dir> ][ -s | -sd <dir> ][ -tal | -tald <dir> ]\n"    
++    "    [ -q   | -qd   <dir> ][ -f | -fd <dir> ][ -c   | -cd   <dir> ]\n" 
++    "    [ -tab | -tabd <dir> ][ -d | -dd <dir> ][ -qr         <file> ]\n"
++	"    [ -hpr | -hprd <dir> ][ -sa     <file> ][ -qa     <file> ]\n"
++	"    [ -fa         <file> ][ -o       <dir> ]\n"
+     "    { <sample_file(s)>     | -id      <dir>   | -if  <fileoffiles> }\n"
+              , TT_VERSION, argv[0] );
+ }
+@@ -167,11 +172,12 @@ usage_dev(int argc, char *argv[])
+     "    [ -raw ] [ -xgr ][ -mc ] \n"
+     "    [ -indel_detect ][ -indel_resolve ][ -indloc <loc> ][ -indsize <size> ]\n"
+     "    [ -3730][ -3700pop5][ -3700pop6][ -3100][ -mbace]\n"
+-    "    [ -p  | -pd  <dir> ] [ -s | -sd <dir> ] [ -tip | -tipd <dir> ]\n"
+-    "    [ -q  | -qd  <dir> ] [ -c | -cd <dir> ] [ -tal | -tald <dir> ]\n"
+-    "    [ -d  | -dd  <dir> ] [ -qr     <file> ] [ -tab | -tabd <dir> ]\n"
+-    "    [ -ipd <dir> ]       [ -hpr  | -hprd <dir> ]                  \n"
+-    "    [ -sa       <file> ] [ -qa     <file> ] [ -o           <dir> ]\n"
++    "    [ -p   | -pd   <dir> ] [ -s | -sd <dir> ] [ -tip | -tipd <dir> ]\n"
++    "    [ -q   | -qd   <dir> ] [ -f | -fd <dir> ] [ -c   | -cd   <dir> ]\n"
++	"    [ -tal | -tald <dir> ] [ -d | -dd <dir> ] [ -qr         <file> ]\n"
++	"    [ -tab | -tabd <dir> ] [ -ipd     <dir> ] [ -hpr | -hprd <dir> ]\n"
++    "    [ -sa         <file> ] [ -qa     <file> ] [ -fa         <file> ]\n"
++	"    [ -o           <dir> ]\n"
+     "    { <sample_file(s)>   | -id     <dir>    | -if  <fileoffiles> }\n"
+              , TT_VERSION, argv[0] );
+ }
+@@ -216,6 +222,9 @@ help_message(int argc, char *argv[])
+ "                         and status reports (tt.status) to directory <dir>\n"
+ "    -p                   Output .phd.1 file(s), in the current directory\n"
+ "    -pd <dir>            Output .phd.1 file(s), in the specified directory\n"
++"    -f                   Output .fastq file(s), in the current directory\n"
++"    -fa <file>           Append .fastq file(s) to <file>\n"
++"    -fd <dir>            Output .fastq file(s), in the specified directory\n"
+ "    -q                   Output .qual file(s), in the current directory\n"
+ "    -qa <file>           Append .qual file(s) to <file>\n"
+ "    -qd <dir>            Output .qual file(s), in the specified directory\n"
+@@ -802,7 +811,7 @@ process_file(BtkLookupTable *table, Cont
+     }
+ 
+     if (OutputQual && !options->indel_resolve) {
+-	if ((r = Btk_output_quality_values(QualType, path     ,
++	if ((r = Btk_output_quality_values(QualType, path,
+ 	    QualDirName, multiqualFileName,
+ 	    quality_values, num_called_bases, left_trim_point, right_trim_point,
+             Verbose)) == ERROR)
+@@ -811,8 +820,19 @@ process_file(BtkLookupTable *table, Cont
+ 	}
+     }
+ 
+-    if (OutputFasta && !options->indel_resolve) {
+-	if ((r = Btk_output_fasta_file(FastaType, path     ,
++	if (OutputFastq && !options->indel_resolve) {
++	if ((r = Btk_output_fastq_file(FastqType, path,
++								   FastqDirName, multifastqFileName,
++								   called_bases, quality_values,
++								   num_called_bases, left_trim_point, right_trim_point,
++								   Verbose)) == ERROR)
++	{
++		goto error;
++	}
++	}
++	
++	if (OutputFasta && !options->indel_resolve) {
++	if ((r = Btk_output_fasta_file(FastaType, path,
+ 	    FastaDirName, multiseqFileName,
+ 	    called_bases, num_called_bases, left_trim_point, right_trim_point,
+             Verbose)) == ERROR)
+@@ -1171,6 +1191,9 @@ main(int argc, char *argv[])
+     OutputQualRpt   = 0;
+     QualDirName[0]  = '\0';
+     QualType        = NAME_NONE;
++    OutputFastq     = 0;
++    FastqDirName[0] = '\0';
++    FastqType       = NAME_NONE;
+     lut_name        = NULL;
+     context_table   = NULL;
+     options.chemistry    = NULL;
+@@ -1210,6 +1233,7 @@ main(int argc, char *argv[])
+     Deletion             = -3;
+     multiqualFileName[0] = '\0';
+     multiseqFileName[0]  = '\0';
++    multifastqFileName[0]	= '\0';
+     MultiFastaFilesDirName[0] = '\0';
+     status_code[0]            = '\0';
+     OutputFourMultiFastaFiles = 0;
+@@ -1244,6 +1268,8 @@ main(int argc, char *argv[])
+              (strcmp(argv[optind], "-qd")             == 0) ||
+              (strcmp(argv[optind], "-qa")             == 0) ||
+              (strcmp(argv[optind], "-qr")             == 0) ||
++             (strcmp(argv[optind], "-fd")             == 0) ||
++             (strcmp(argv[optind], "-fa")             == 0) ||
+              (strcmp(argv[optind], "-sd")             == 0) ||
+              (strcmp(argv[optind], "-sa")             == 0) ||
+              (strcmp(argv[optind], "-t" )             == 0) ||
+@@ -1291,6 +1317,7 @@ main(int argc, char *argv[])
+              (strcmp(argv[optind], "-mbace")        != 0) &&
+              (strcmp(argv[optind], "-p")            != 0) &&
+              (strcmp(argv[optind], "-q")            != 0) &&
++             (strcmp(argv[optind], "-f")            != 0) &&
+              (strcmp(argv[optind], "-c")            != 0) &&
+              (strcmp(argv[optind], "-d")            != 0) &&
+              (strcmp(argv[optind], "-s")            != 0) &&
+@@ -1414,8 +1441,31 @@ main(int argc, char *argv[])
+                     break;
+                 }
+ 
+-            case 'f':
+-                switch (listtype) {
++			case 'f':
++				if (strcmp(args, "-f") == 0) {
++					OutputFastq++;
++					FastqType |= NAME_FILES;
++					j = strlen(args) - 1;   /* break out of inner loop */
++					break;
++				}
++				else if (strcmp(args, "-fa") == 0) {
++					OutputFastq++;
++					FastqType |= NAME_MULTI;
++					strncpy(multifastqFileName, argv[++optind],
++							sizeof(multifastqFileName));
++					j = strlen(args) - 1;   /* break out of inner loop */
++					break;
++				}
++				else if (strcmp(args, "-fd") == 0) {
++					OutputFastq++;
++					FastqType |= NAME_DIR;
++					strncpy(FastqDirName, argv[++optind], sizeof(FastqDirName));
++					validateDirectory(FastqDirName, &options);
++					j = strlen(args) - 1;   /* break out of inner loop */
++					break;
++				}
++
++				switch (listtype) {
+                 case 'i':
+                     InputType = NAME_FILEOFFILES;
+                     (void)strncpy(InputName, argv[++optind],
+@@ -1802,7 +1852,7 @@ main(int argc, char *argv[])
+         exit(2);
+     }
+ 
+-    if (OutputPhd || OutputQual || OutputFasta || 
++    if (OutputPhd || OutputQual || OutputFasta || OutputFastq ||
+         OutputQualRpt || OutputSCF || OutputFourMultiFastaFiles ||
+         (options.tal_dir[0] != '\0') || (options.tip_dir[0] != '\0') ||
+         (options.tab_dir[0] != '\0') || (options.hpr_dir[0] != '\0') || 
+@@ -1828,7 +1878,7 @@ main(int argc, char *argv[])
+     fprintf(stderr, "OutputQualRpt=%d OutputAln=%d tip=%d tab=%d het=%d mix=%d poly=%d \n",
+         OutputQualRpt, OutputAln, tip, tab, het, mix, poly);
+ #endif
+-    if (!OutputPhd     && !OutputQual  && !OutputFasta  && !OutputSCF && 
++    if (!OutputPhd     && !OutputQual  && !OutputFasta  && !OutputFastq  && !OutputSCF && 
+         !OutputQualRpt && (options.tal_dir[0] == '\0')  && 
+          (options.tip_dir[0] == '\0')  && (options.tab_dir[0] == '\0') && 
+          (options.hpr_dir[0] == '\0') && !options.poly && 
+@@ -1853,7 +1903,11 @@ main(int argc, char *argv[])
+     if (multiseqFileName[0] != '\0') {
+         unlink(multiseqFileName);
+     }
+-
++    
++    if (multifastqFileName[0] != '\0') {
++        unlink(multifastqFileName);
++    }
++    
+     /*
+      * Set line buffering on the status output so that someone monitoring
+      * progress can actually see incremental progress.
+@@ -1903,7 +1957,7 @@ main(int argc, char *argv[])
+                 table = Btk_get_3730pop7_table();
+                 if (Verbose > 1) {
+                     fprintf(stderr,
+-                             "Using a built-in 3700 Pop-6 table for this run.\n");
++                             "Using a built-in 3730 Pop-7 table for this run.\n");
+                 }
+             }
+             else if (options.lut_type == ABI3100) {

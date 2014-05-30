@@ -1,0 +1,256 @@
+README file for directory mktrain
+=================================
+
+Overview
+--------
+The source code stored in this directory can be used to build the following 
+two executables: 
+- train     and 
+- trainphd.
+
+Executable 'train' 
+-----------------
+- takes one or more trace file(s) and one or more reference sequence(s) as 
+  input,  
+- uses the same algorithm as ttuner executable to perform processing of the 
+  trace data and call read sequence,
+- for each base in the read sequence, calculates several predictors, or trace 
+  parameters, which can be used for evaluation of the quality value 
+  of the basecall, 
+- performs a local alignment of read bases against the reference sequence, and
+- outputs the alignment stored as several columns: base position in a reference 
+  sequence, base character in a reference sequence, whether the reference base 
+  matches the aligned read base or not, aligned base position in read sequence, 
+  aligned base character in read sequence, and four trace parameters (predictors
+  of quality value) calculated for a given called read base. The alignment file 
+  can be subsequently used as input by several other executables: lut, checkbc 
+  and checkqv. 
+
+If invoked without arguments, train will produce a brief usage message:
+
+% train
+
+Version: TT_3.01
+usage: train [ -h ]
+        [ -nocall ] [ -recalln ] [ -edited_bases ]
+        [ -het    ] [ -mix ]     [ -min_ratio <ratio> ]
+        [ -C <ref_seq_file>]     [ -V <vector> ]
+        [ -P <primer> ]          [ -S <site> ]
+        [ -M <match_premium> ]   [ -X <subst_penalty> ] [ -G <gap_penalty> ]
+        [ -fr <repeat_frac> ]    [ -fe <max_frac_of_errors> ]
+        [ -a <min_portion_aligned> ] [ -l <min_read_length> ]
+        [ -ipd <dir> ]         [ -o <output_file> ]
+        <sample_file(s)> || -d <input_dir> || -p <project_file>
+
+where
+
+    -h Displays the detailed help message.
+
+    -nocall This flag disables base calling and sets the current sequence to 
+        the "original" base calls that are read from the input file. By 
+        default, the current sequence is set to ttuner base calls. This 
+        parameter cannot be used together with -recalln.
+
+    -recalln This flag specifies to recall Ns present in the "original" read 
+        sequence, but not to change, insert or delete any other bases. All 
+        bases will be relocated to the positions of corresponding newly 
+        defined peaks. This option cannot be used together with -nocall.
+
+    -edited_bases This option forces train to read edited base calls and 
+        locations from sample file(s) and "start" from them when recalling 
+        bases. By default, train reads and starts from called bases and 
+        locations.
+
+    -het Specifies that train make heterozygous base calls using
+        IUB Nucleotide Codes. This option assumes that data in the trace file(s)
+        represent diploid samples, with 50:50 ratio of two alleles.
+
+    -mix Similar to -het, but does not assume a 50:50 ratio
+        of the (two) alleles in the sample. Instead, this ratio is determined 
+        based on the relative heights of peaks at the currently processed mixed 
+        called location. This option can not be used together with -het.
+
+    -min_ratio <peak_height_ratio> Specifies a threshold ratio of heights of 
+        two peaks found at a heterozygous or mixed called location. This 
+        parameter will be used only when -het or -mix option is additionally 
+        specified.  If the actual ratio of heights of two peaks is less than 
+        the specified threshold, then this pair of peaks will not be considered 
+        as candidate for heterozygous or mixed call. The default value for 
+        min_ratio is 0.15
+
+    -C <ref_seq_file> Specifies the file which contains FASTA-formatted 
+        correct/reference sequence. 
+
+    -V <vector> Specifies train use the vector sequence stored in the 
+       specified file (in FASTA format). The vector part of read sequence will 
+       be recognized and will be trimmed before the alignment process.
+
+    -P <primer> Specifies train use the primer sequence stored in the 
+       specified file (in FASTA format). Used to help identify the vector part 
+       of a read.
+
+    -S <site> Specifies train use the sequence of the restriction 
+       site stored in the specified file (in FASTA format). Used to help 
+       identify the vector part of a read.
+
+    -M <match_premium> Instructs train use the specified match premium 
+       when performing the local alignment. The default is 10.
+
+    -X <subst_penalty> Instructs train use the specified substitution penalty 
+       when performing the local alignment. The default is -20.
+
+    -G <gap_penalty> Specifies train use the specified gap penalty 
+       when performing the local alignment. The default is -40.
+
+    -fr <repeat_fraction> Instructs train to ignore a particular read
+       if it aligns to more than one location in the reference sequence, and the 
+       fraction of differences between the read and the reference sequence 
+       within each of these alignments exceeds the specified repeat_fraction 
+       (= 0.85 by default)
+ 
+    -fe <max_fraction_of_errors> Instructs train to ignore a 
+       particular read if the fraction of differences between the read and the 
+       reference sequence within each of these alignments exceeds the specified 
+       level (= 0.05 by default)
+
+    -a <min_portion_aligned> Instructs train to ignore a particular
+       read if less than the specified portion of its bases is aligned 
+       against the reference sequence (default is 0)
+
+    -l <min_read_length> Instructs train to ignore a read if its 
+       length is less than the specified value (0 by default)
+
+    -o <output_file> Output the alignment to the specified file, rather than to 
+        standard output
+
+    -ipd <phd_dir> Instructs train to read the original base calls and locations 
+        from .phd.1-formatted file(s) rather than from sample file(s). The 
+        .phd file(s) should be located in the specified directory <phd_dir> 
+        and have name(s) which matches the name(s) of the input sample file(s). 
+        This option allows using Phred's base calls and locations or starting 
+        from them when recalling bases.
+
+    -d <input_sample_dir> Specifies that train process every sample file in the 
+       specified directory.
+
+    -p <project_file> Specifies that train read the names of sample file and 
+        file containing the reference sequence from project_file. Data in the 
+        project file are organized in two columns: the first column specifies 
+        the name of the file storing the reference sequence; and the second 
+        column specifies the name of a sample file. This way, more than one 
+        reference sequence can be specified, each of these sequences matching 
+        its corresponding set of samples.
+
+Example 
+-------
+To produce an alignment file using a set of sample files stored in directory 
+<input_sample_dir> and a reference sequence stored in file <ref_seq_file>, use 
+the following command:
+
+train -C <ref_seq_file> -d <input_sample_dir>  >  <alignment_file>
+
+Executable 'trainphd'
+--------------------
+- takes one or more PHD files(s) and one or more reference sequence(s) as 
+  input,
+- performs a local alignment of bases in the PHD file against bases in the 
+  corresponding reference sequence, and
+- outputs the alignment stored as several columns: base position in a reference
+  sequence, base character in a reference sequence, whether the reference base
+  matches the aligned read base or not, aligned base position in read sequence,
+  aligned base character in read sequence and quality value of called base
+  in a read sequence. If trainphd is invoked with option -t <tab_dir>, 
+  it will additionally output alternative read base calls and their 
+  corresponding quality values for each position in a read where alternative
+  calls were detected. 
+
+NOTE: PHD files (normally with extension .phd.1) are produced by Phred,
+  TraceTuner, KB basecaller and other base calling programs. 
+
+If invoked without arguments, trainphd will produce a brief usage message:
+
+% trainphd 
+
+usage: trainphd [ -h ]
+        [ -C <ref_seq_file> ]    [ -V <vector> ]
+        [ -P <primer> ]          [ -S <site> ]
+        [ -M <match_premium> ]   [ -X <subst_penalty> ] [ -G <gap_penalty> ]
+        [ -r <repeat_fraction> ] [ -f <max_fraction_of_errors> ]
+        [ -a <min_portion_aligned> ] [ -l <min_read_length> ]
+        [ -t <tab_dir> ]         [ -o <output_file> ]
+        <phd_file(s)> || -d <input_phd_dir> || -j <project_file>
+
+where
+    -h Displays the detailed help message.
+
+    -V <vector> Specifies train use the vector sequence stored in the
+       specified file (in FASTA format). The vector part of read sequence will
+       be recognized and will be trimmed before the alignment process.
+
+    -P <primer> Specifies train use the primer sequence stored in the
+       specified file (in FASTA format). Used to help identify the vector part
+       of a read.
+
+    -S <site> Specifies train use the sequence of the restriction
+       site stored in the specified file (in FASTA format). Used to help
+       identify the vector part of a read.
+
+    -M <match_premium> Instructs train use the specified match 
+       premium when performing the local alignment. The default is 10.
+
+    -X <mismatch_penalty> Instructs train use the specified mismatch
+       (substitution) penalty when performing the local alignment. The default
+       is -20.
+
+    -G <gap_penalty> Specifies train use the specified gap penalty
+       when performing the local alignment. The default is -40.
+
+    -C <ref_seq_file> Specifies the file which contains
+       FASTA-formatted correct/reference sequence. 
+
+    -r <repeat_fraction> Instructs trainphd to ignore a particular 
+       read if it aligns to more than one location in the reference sequence, 
+       and the fraction of errors (that is, the differences between the read 
+       and the reference) for each of these alignments exceeds the specified 
+       repeat_fraction (= 0.85 by default)
+
+    -f <max_fraction_of_errors> Instructs trainphd to ignore a read if the 
+       fraction of errors within its aligned region exceeds the specified 
+       value (= 0.05 by default)
+
+    -a <min_portion_aligned> Instructs trainphd to ignore a read
+       if less than the specified portion of its bases is aligned with reference
+       sequence (default is 0)
+
+    -l <min_read_length> Instructs trainphd to ignore a read of length less than 
+       specified number of basepairs (0 by default)
+
+    -t <tab_dir> Instructs trainphd extract alternative base calls from TAB 
+       files stored in directory tab_dir_name and to output these calls, 
+       together with quality value for each alternative call
+
+    -d <input_phd_dir> Instructs trainphd process every file in the specified
+       directory.
+
+    -j <project_file> Specifies that trainphd read the PHD file names and the 
+       name(s) of files containing the reference sequence from project_file. 
+       Data in the project file is organized in two columns: the first column 
+       contains the reference sequence file name and the second column contains 
+       the name of a PHD file. This way, more than one reference sequence can 
+       be specified, each one with its own set of matching PHD files.
+
+Examples
+--------
+To produce an alignment file using a set of PHD files stored in directory
+<input_phd_dir> and a reference sequence stored in file <ref_seq_file>, use the 
+following command:
+
+trainphd -C <ref_seq_file> -d <input_phd_dir>   >   <alignment_file>
+
+In order to additionally output alternative base calls into the alignment 
+file, first produce a directory of TAB files by running ttuner executable on a 
+set of corresponding diploid or mixed sample files with -tabd <tab_dir> option, 
+then invoke trainphd with -t <tab_dir> option:
+
+trainphd -C <ref_seq_file> -t <tab_dir> -d <input_phd_dir>   >   <alignment_file>
+ 

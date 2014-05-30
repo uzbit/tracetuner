@@ -1,0 +1,151 @@
+--------------------------------------------------------------------------------
+README for directory mkchk  
+--------------------------------------------------------------------------------
+
+Overview
+--------
+The source code stored in this directory is intended to be used for building 
+the following four executables: 
+- checkqv, 
+- checkqvphd,
+- checkbc and
+- checkbcphd.
+To build the executables on Unix/Linux platform, type 'make'. For MS DOS 
+environment, use command 'pcmake' instead.
+
+NOTE: before building the executables, the code in directory ../compute_qv
+      must be compiled. This code generates static library file libtt.a, 
+      which is needed by  checkbc, checkqv, checkbcphd and checkqvphd.
+
+Purpose
+-------
+Executable 'checkqv' can be used to check the accuracy of quality values
+assigned to called bases by TraceTuner and stored in the alignment file produced
+by executable 'train'.
+
+Executable 'checkqvphd' can be used to check the accuracy of quality values
+assigned to called bases by any base calling program which can output PHD file;
+the base calls are supposed to be stored in the alignment file produced by
+executable 'trainphd'.
+
+Executable 'checkbc' can be used to check the accuracy of basecalls 
+made by TraceTuner and stored in the alignment file produced by executable 
+'train'.
+
+Executable 'checkbcphd' can be used to check the accuracy of the base calls
+produced by any base calling program which can output PHD file; the base calls
+are supposed to be stored in the alignment file produced by executable 
+'trainphd'.
+
+Usage: checkqv
+--------------
+If you invoke 'checkqv' without arguments or with argument -h, you will get a
+brief usage message
+
+% checkqv
+
+Version: TT_3.01
+usage: checkqv  [ -h ]  <lookuptable>   <    <alignment_file>
+
+where
+
+    <lookuptable> is a lookup table file in the format produced by executable
+    'lut'.
+
+    <alignment_file> is the alignment file in format produced by executable
+    'train'.
+
+Output: checkqv
+---------------
+checkqv outputs the results to stdout. The output data comprise 6 columns:
+- predicted quality value (that is, assigned by TraceTuner),
+- observed quality value, which is computed as follows: a group of all basecalls
+  assigned a given predicted quality value is considered; a number of correctly
+  and incorrectly called bases within the group is counted and the probability
+  of the base calling error within the group is calculated; finally, this
+  probability, P, is used to evaluate the observed quality value of the group,
+  QVobs, according to the formula: QVobs = - 10*log(P),
+- number of correctly called bases within a group of basecalls which were assigned
+  a given predicted quality value,
+- number of incorrectly called bases within a group of basecalls which were assigned
+  a given predicted quality value,
+- total number of  bases within a group assigned a given predicted quality value,
+  and
+- fraction of the total number of basecalls assigned a given quality value or
+  better.
+
+Example.
+--------
+To check the accuracy of a lookup table <lookup1.tbl> produced  by executable 'lut'
+from a calibration dataset 1 on another, testing dataset 2 which has been processed
+with executable 'train', so that its output has been stored in file train.out2,
+use the following command:
+
+check <lookup1.tbl>    <     <train.out2>     >     check.out1
+
+File check.out1 will contain a table of predicted vs observed quality values.
+(Ideally, these must be the same. However, in reality they may differ either
+because of improper calibration dataset or because of its insufficient size.)
+
+
+Usage: checkqvphd
+-----------------
+If you invoke 'checkqvphd' with argument -h, you will get a brief usage message
+
+% checkqvphd -h
+
+Version: TT_3.01
+usage: checkqvphd [ -h ]    <    <alignment_file>
+
+where
+
+    <alignment_file> is the alignment file in format produced by executable
+       'trainphd'.
+
+Output: checkqvphd
+------------------
+The output format for executable 'checkqvphd' is the same as for checkqv.
+
+
+Usage: checkbc
+--------------
+If you invoke 'checkbc' with argument -h, you will get a brief usage message
+
+% checkbc -h
+
+Version: TT_3.01
+usage: checkbc    [ -h ]     <    <alignment_file
+
+where
+
+    <alignment_file> is the file in format produced by executable 'train'.
+
+Output: checkbc
+---------------
+checkbc outputs the results to stdout. The output data comprise 10 columns:
+- base position 
+- % total base calling error at a given read position,
+- % deletion, % insertion and % substitution error at a given read position,
+- total number of aligned read bases at a given read position, and
+- total numbers of deleted, inserted, substituted and incorrect read bases 
+  at a given read position.
+
+
+Usage: checkbcphd
+-----------------
+If you invoke 'checkbcphd' with argument -h, you will get a brief usage message
+
+% checkbcphd -h
+
+Version: TT_3.01
+usage: checkbcphd [ -h ]     <    <alignment_file
+
+where
+
+    <alignment_file> is the file in format produced by executable 'trainphd'.
+
+Output: checkbcphd
+------------------
+The output format for executable 'checkbcphd' is the same as for checkbc.
+
+

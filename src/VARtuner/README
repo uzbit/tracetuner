@@ -1,0 +1,31 @@
+VARtuner is a set of tools for reference-guided assembly of (clonally 
+amplified or mixed) DNA reads and detection of variants from this assembly. 
+
+The tools take as input an alignment of (clonally amplified or mixed) reads 
+to a reference sequence, assemble the reads and determine a consensus sequence 
+from this assembly. The alignment file can be produced by executable trainphd 
+with option -t <tab_dir>. 
+
+Example. 
+--------
+Program GetVARReport.pl stored in this cvs directory reports the high-quality 
+differences between the mixed consensus sequence and the reference sequence.
+
+Assuming your mixed Sanger samples are stored in directory ./chromat_dir, 
+executables ttuner and trainphd are in current directory and the reference 
+sequence is stored in file ./Ref_seq.txt, the variant report can be generated 
+using the following series of commands:
+
+mkdir phd_dir tab_dir
+ 
+ttuner -3100 -pd phd_dir -mix -tabd tab_dir -id chromat_dir
+
+trainphd -C Ref_seq.txt -t tab_dir -d phd_dir > trainphd.out
+
+GetVARReport.pl  Ref_seq.txt trainphd.out > VAR_report.txt
+
+The VAR report comprises five columns: (1) position in the reference sequence, 
+(2) base of the reference sequence, (3) the corresponding base in the new 
+consensus sequence, (4) quality value of the base in consensus sequence and, 
+if available, (5) an alternative consensus base.
+

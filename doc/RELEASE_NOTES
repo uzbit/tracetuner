@@ -1,0 +1,101 @@
+------------------------------------------------------------------------------
+TraceTuner 3.0.5 beta Release Notes                          January 7, 2008
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+Introduction
+------------------------------------------------------------------------------
+
+These notes describe beta release of TraceTuner version 3.0.5, which is
+identical to previous 3.0.x beta releases, except for bug fixes. This code    
+compiles on Linux platform and MS DOS using GNU C compiler. In addition to 
+executable ttuner, it supports seven new executables:  train, trainphd, lut, 
+checkbc, checkbcphd, checkqv and checkqvphd. It also includes algorithmic and 
+interface improvements for ttuner over the previous releases 2.0.x and allows 
+an updated set of built-in calibrations of quality values.
+
+The major new features in 3.0.x release:
+
+    o   Availability of the source code for calibration of quality values. 
+        Thus, the use of this code will allow automatic generation of 
+        customized calibrations (a.k.a. lookup tables) from user-supplied 
+        Sanger sequencing datasets.
+
+    o   Availability of tools for checking the accuracy of base calls and 
+        quality values produced by TraceTuner, as well as by any other
+        base calling program which supports output of PHD file.
+
+    o   Support for detection of heterozygous indels in diploid or mixed
+        DNA samples, as well as for deconvolving "mixed" electropherograms 
+        resulting from the presence of heterozygous indels into a couple
+        of "pure" electropherograms representing the long and short haplotypes.
+
+    o   Updated procedure for calling heterozygous SNPs/mixed bases and
+        evaluaing their quality values in diploid and/or mixed DNA samples.
+
+    o   All the executables can be built not only on Linux/Unix platform,
+        but also in MS DOS.
+    
+    o   Built-in generic calibrations are available for ABI 3730 and MegaBACE 
+        sequencing platforms.
+
+    o   No node-locked license will be required for running this code.
+
+------------------------------------------------------------------------------
+Modification History
+------------------------------------------------------------------------------
+
+2.0.9:				
+
+    o   TT: Updated to use node-locked license.
+
+    o   TT: Added support for .poly file output.
+
+    o   TT: Fixed a problem that the base calling was dependent on the color 
+	ordering.
+
+    o   TT: Fixed a problem that was giving "Error calling Btk_process_peaks" 
+	error message.
+
+    o   TT: Fixed out-of-order base calling.
+
+    o   TT: Fixed a problem that could sometimes result in assigning zero 
+	height to a peak when identifying peak boundaries.
+
+    o   TT: Improved the pure base-calling algorithm, which takes more care 
+	of the spacing of called bases.
+
+    o   TT: Improved the algorithm for finding the "best" candidate base 
+	regarded as "inserted" base.
+
+    o   TT: Optimized some parameters for better performance.
+
+    o   Launcher: Added *.abd filter (for Cimarron basecaller) in the file
+	browser.
+
+    o   Launcher: Changed the default value for minimum peak height ratio 
+        from 0.15 to 0.1.
+
+    o   Launcher: Updated online help.
+
+
+------------------------------------------------------------------------------
+Known Bugs/Issues/Limitations with this release
+------------------------------------------------------------------------------
+
+    o   The command-line interface does not support processing compressed
+	chromatogram files on non-UNIX platforms.
+
+    o	The the Viewer Java Interface does not support the reading of 
+        compressed or .gz chromatogram files.
+
+    o	In the Viewer Java Interface, "Print Global View of All Files" option
+	in the "File" menu requires printing destination to be set as the
+	system-default printer.  Problems may occur if the printing 
+	destination is set to non-system-default printers or files, when 
+	utilizing this print option.
+
+
+=============================================================================
+Copyright (c) 1999-2003, Paracel, Inc.  All rights reserved.
+=============================================================================

@@ -1,0 +1,42 @@
+------------
+Shipment.log
+------------
+
+Please record in this file anything sent by engineering to a customer.
+Purpose is to keep track of any lookup tables, beta releases, or non-
+standard bug fixes.  In particular, make sure anything sent out is tagged
+in cvs in some manner and record the cvs tag.  Regular released
+distributions do not need to be recorded as these will be sent by
+manufacturing.
+
+------	-------------------------------------------------------------	------
+Date	Item Sent							Who
+------	-------------------------------------------------------------	------
+
+991213	Tracetuner 1.1 beta release to carl.fosler@celera.com.		MFM
+	Celera gets source so this included sources for compute_qv.
+	Compiled it for Dec Alpha and Sun Solaris.
+	CVS tag was TT_1_1BETA.  Program version was TT_1_1BETA.
+	Did not include any of the java stuff.
+
+
+991215  Executables for Tracetuner 1.1, version tagged V991215,         Gena
+        built on Dec Alpha 4.0D, Sun Solaris 5.6 and PC NT
+        platforms; README v.1.4 and RELEASE_NOTES v.1.1
+        to
+            Paul McEwan <paul@genome.wi.mit.edu> 
+        and 
+            Michael Holmes <mholmes@tigr.org>
+
+        Lookup table lookup.table.celera.pop5, version 1.2, to
+            Paul McEwan <paul@genome.wi.mit.edu> 
+ 
+        Lookup table lookup.table.TIGR, version 1.2, to
+            Michael Holmes <mholmes@tigr.org>
+
+
+991216	Tracetuner 1.1 beta release update to carl.fosler@celera.com.	MFM
+	Celera gets source so this included sources for compute_qv.
+	Compiled it for Dec Alpha and Sun Solaris.
+	CVS tag was V991215.  Program version was TT_1.1_V991215.
+	Did not include any of the java stuff.

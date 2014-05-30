@@ -1,0 +1,273 @@
+-------------------------------------------------------------------------------
+README for directory compute_qv
+-------------------------------------------------------------------------------
+
+This directory contains the source code for building executable ttuner,
+which is the main executable of TraceTuner software version 3.0.1. This 
+executable
+- takes one or more Sanger trace file(s) as input,
+- performs processing of the trace data, calls bases and evaluates quality
+  value of each base call in a variety of processing modes, and
+- outputs results of the processing in a number of different formats.
+
+Many of TraceTuner's command line options and output data formats are similar 
+to and compatible with the options/formats available with Phred software 
+( http://www.phrap.org/phredphrapconsed.html ). Examples include the options 
+to produce PHD file(s), .qual file(s), .seq file(s), .poly file(s),
+etc.  Other options/formats are unique to TraceTuner, such as the option to 
+recall Phred's original 'N' calls to the best guess; to use external 
+(customized) calibration table for evaluation of quality values; to call 
+heterozygotes/mixed bases from dipoloid and mixed DNA samples and evaluate
+quality values of all the base calls; or to detect heterozygous indels and
+deconvolve the mixed electropherogram into a couple of pure electropherograms
+corresponding to the long and short haplotypes.
+
+If invoked without arguments, ttuner will produce a brief usage message:
+
+% ttuner
+
+Version: TT_3.01
+usage: ttuner
+    [ -h ]
+    [ -Q ]                 [ -V ]
+    [ -nocall] [ -recalln ][ -edited_bases ] [ -ladder]
+    [ -het   ] [ -mix     ][ -min_ratio <phr>     ]
+    [ -trim_window  <size>][ -trim_threshold <qv> ][ -ipd <dir>]
+    [ -t <lookup_table>   ][ -C <reference_file>  ][ -cv3   ]
+    [ -indel_detect ][ -indel_resolve ][ -indloc <loc> ][ -indsize <size> ]
+    [ -3730 ][ -3700pop5 ][ -3700pop6 ][ -3100 ][ -mbace]
+    [ -p    | -pd  <dir>  ][ -s | -sd <dir> ] [ -tal | -tald <dir> ]
+    [ -q    | -qd  <dir>  ][ -c | -cd <dir> ] [ -tab | -tabd <dir> ]
+    [ -d    | -dd  <dir>  ][ -qr     <file> ] [ -hpr | -hprd <dir> ]
+    [ -sa         <file>  ][ -qa     <file> ] [ -o           <dir> ]
+    { <sample_file(s)>     | -id      <dir>   | -if  <fileoffiles> }
+
+where 
+
+    -h Displays the detailed help message.
+
+    -Q (quiet) Turns off ttuner's status messages.
+
+    -V (verbose)  Specifies that TraceTuner produce additional
+        process status messages. The default (without either the -Q or -V
+        option) is level 1. The more V's entered on the command line, 
+        the higher the level of verbosity. 
+        After level 3 (-VV), there is no change in verbosity. 
+        If used in conjunction with the -Q option, the parameter 
+        that appears last on the command line takes precedence.
+
+    -nocall This parameter disables TraceTuner base calling and 
+        sets the current sequence to the base calls that are read from the 
+        input file.  By default, the current sequence is set to the TraceTuner
+        base calls.  This parameter cannot be used together with -recalln. 
+        If you use -nocall, you will get Ns. 
+        If you don't use -nocall, you will not get Ns.
+
+    -recalln This parameter specifies to recall Ns, but not to 
+        change, insert or delete any other bases. 
+        All bases are relocated to the positions of corresponding peaks. 
+        This option cannot be used together with -nocall.
+
+    -edited_bases This option forces TraceTuner to read edited
+        base calls and locations from sample file(s) and "start" from them 
+        when recalling bases. By default, TraceTuner reads and starts from 
+        called bases and locations. 
+
+    -shift This option forces TraceTuner to correct mobility shifts
+        in traces.
+
+    -convolved This option forces TraceTuner to use the 'convolved'
+        model of peak shape instead of the 'gaussian' model, which is used by
+        default. 
+
+    -het Specifies that TraceTuner call heterozygous SNPs using
+        IUB Nucleotide Codes and evaluates quality values of these base calls. 
+        This option assumes that data in the trace file(s) represent diploid 
+        samples, with 50:50 ratio between two haplotypes.
+
+    -mix Specifies that TraceTuner call mixed bases using
+        IUB Nucleotide Codes. The processing is similar to that with -het
+        option, but does not assume a 50:50 ratio of the (two) haplotypes
+        in the sample. Instead, this ratio is determined based on the relative 
+        heights of peaks at the mixed call location. 
+
+    -min_ratio <phr> Specifies a threshold ratio of heights of two 
+        peaks which may be eventually called as heterozygotes. This parameter 
+        will be used only when -het or -mix option is additionally specified.
+        If the actual ratio of heights of two peaks is less than the specified
+        threshold, then this pair of peaks will not be considered as candidate
+        for heterozygous base call. The default value for min_ratio is 0.15
+
+    -trim_window <window_size> Specifies the size of the moving
+        average of bases used to trim the ends of a sequence. The default size
+        is 10. Trimming stops when the moving average of the quality values
+        reaches min_average_quality. Trim data are stored in the .phd output
+        file.
+
+    -trim_threshold <min_average_quality> Specifies the threshold
+        for the aforementioned quality value moving average. The default value
+        is 20.
+
+    -ipd <phd_dir> Specifies that TraceTuner read base calls and 
+        locations from external PHD file(s), rather than from sample file(s),
+        and use this insormation when recalling bases. The PHD file(s) are 
+        supposed to be stored in directory <phd_dir>. Their names should 
+        match the names of sample files and have extention .phd.1. 
+
+    -t <lookup_table> Instructs TraceTuner to use the specified 
+        "external" calibration lookup table. This option overrides the default 
+        (automatic selection of the lookup table) as well as the options -pop5,
+        -pop6, -3100, -377dp and -377dt. To get a message indicating which 
+        table was actually used, specify -V option
+
+    -C <reference_file> Specifies the file which contains
+        FASTA-formatted correct/reference sequence. If either the -tal or
+        -tald <dir> option is additionally used, then TraceTuner will
+        align the sequence of its base calls with the correct sequence and
+        output the result into .tal file
+
+    -cv3 This flag works only with the -c or -cd option. It forces
+        ttuner to output version 3 of .scf files. The default output
+        of .scf files is version 2.
+
+    -indel_detect Instructs TraceTuner detect small heterozygous 
+        indels (<= 100 bp in size) in Sanger trace data and to report the base 
+        index in the long read where the indel starts, the indel size (expressed
+        as number of scan), the indel start location in electropherogram, and 
+        the indel scring.  This option is supposed to be used with diploid 
+        samples.
+
+    -indel_resolve Extends option -indel_detect by additionally
+        instructing TraceTuner deconvolve the original electropherogram 
+        containing indel into two electropherograms corresponding to the 
+        long and short reads (if indel is detected). The resulting 
+        deconvolved electropherograms will be output to SCF files with the 
+        following names: <sample>_long.scf and <sample>_short.scf, where 
+        <sample> was a prefix of the name of input sample file, e.g. 
+        <sample>.ab1 or <sample>.scf.
+
+    -indloc <loc> Instructs TraceTuner search for indel at the 
+        specified location in electropherogram, rather than in the entire
+        electropherogram. Must be used together with option -indel_detect 
+        or -indel_resolve.
+
+    -indsize <size> Instructs TraceTuner search for indel of 
+        specified size (expressed as number of scans). Must be used together 
+        with option -indel_detect or -indel_resolve.
+
+    -3730 Instructs TraceTuner to evaluate quality values of called
+        bases using the built-in calibration table generated for processing 
+        electropherograms produced by ABI 3730 DNA Analyzer. By default, 
+        TraceTuner will automatically select the built-in calibration table 
+        best matching the processed data from the list of five built-in tables.
+
+    -3700pop5 Analogous to the -3730 option, but instructs
+        TraceTuner to evaluate quality values of called bases using the built-in 
+        calibration table generated for processing electropherograms produced
+        by ABI 3700 DNA Analyzer with POP-5 separation polymer.
+
+    -3700pop6 Analogous to the -3730 option, but instructs
+        TraceTuner to evaluate quality values of called bases using the built-in 
+        calibration table generated for processing electropherograms produced
+        by ABI 3700 DNA Analyzer with POP-6 separation polymer.
+
+    -3100 Analogous to the -3730 option, but instructs 
+        TraceTuner to evaluate quality values of called bases using the built-in 
+        calibration table generated for processing electropherograms produced
+        by ABI 3100 Genetic Analyzer.
+
+    -mbace Analogous to the -3730 option, but instructs
+        TraceTuner to evaluate quality values of called bases using the built-in
+        calibration table generated for processing electropherograms produced
+        by MegaBACE DNA Sequencer.
+
+    -p Specifies that TraceTuner output be written to PHD-formatted file(s) in 
+        the current working directory. 
+
+    -pd <dir> Analogous to -p, but output file is written to the specified 
+        directory. 
+
+    -q Specifies that TraceTuner write one .qual-formatted quality value output
+        file for each sample file to the current working directory.
+
+    -qd <dir> Analogous to -q, but output file is written to the specified 
+        directory. 
+
+    -c Specifies that TraceTuner output results in a SCF-formatted file in the
+       current working directory. 
+
+    -cd <dir> Analogous to -c, but output file is written to the specified 
+        directory. 
+
+    -s Specifies that TraceTuner write its recalled bases in FASTA-formatted 
+       sequence file for each sample file in the current working directory.
+
+    -sd <dir> Analogous to -s, but output the FASTA-formatted file to the 
+        specified directory. 
+
+    -d  Specifies that TraceTuner write out a .poly file that is used for 
+        detecting polymorphic bases. 
+
+    -dd <dir> Analogous to -d, but output file is written to the specified 
+        directory. 
+
+    -qr <output_file> Specifies that TraceTuner write a report file containing 
+        statistics on the number of input files that contain bases with QV > 20
+        to the specified file. The format of the will be similar to that of 
+        qvreport.txt. 
+
+    -hpr Specifies that TraceTuner output HPR (homopolymer run) file
+        to the currect working directory. The file includes FASTA header
+        followed by four columns of data: homopolymer base, length (that is,
+        the number of called identical bases in the row), normalized distance
+        between the bases in the homopolymer, and the colaction of the fisrt
+        base of the homopolymer in electropherogram.
+
+    -hprd <dir> Analogous to -d, but output HPR file is written to the specified
+        directory.
+
+    -sa <file> Specifies that TraceTuner aggregate recalled bases for all
+        sample files into a single multi-FASTA formatted sequence file.
+
+    -qa <file> Specifies that TraceTuner aggregate the quality value output for
+        all sample files into a single multi-FASTA formattted output file.
+
+    -o <dir> Specifies that TraceTuner output four file to the specified
+       output directory. The output files are: multi-FASTA-formatted file of 
+       base calls tt.seq, multi-FASTA-formatted file of quality values 
+       tt.qual, multi-FASTA-formatted file of called locations tt.loc and
+       file tt.status which specifies the status of processing of each sample
+       file.
+
+    -tal Specifies that TraceTuner align its base calls with the bases in 
+        <consensus_file> and output the results in a file with .tal extension 
+        in the sample file directory. The Viewer requires .tal files in order 
+        to display the reference sequences. 
+
+    -tald <dir> Analogous to -tal, but results are written to a file in the 
+        specified directory. 
+
+    -tab Specifies that TraceTuner output the alternative base calls in a 
+        file with .tab extension in the sample file directory. The Viewer 
+        requires .tab files in order to display TraceTuner alternative base 
+        calls. This option works only together with -het or -mix option  
+
+    -tabd <dir> Analogous to -tab, but results are written to a file in the 
+        specified directory. 
+
+    -ipd <dir> Instructs TraceTuner to read the original base calls and 
+        locations from .phd.1-formatted file(s) rather than from sample 
+        file(s). The .phd file(s) should be located in the specified 
+        directory <phd_dir> and have name(s) which matches the name(s) 
+        of the input sample file(s). This option allows using Phred's base 
+        calls and locations or starting from them when recalling bases. 
+
+    -id <dir> Specifies that TraceTuner process every file in the specified 
+        directory. 
+
+    -if <file_of_files> Specifies that TraceTuner read file_of_files and treat 
+        each line as a path to sample filename. 
+
+=========================================================================
+Copyright (c) 1999-2003, Paracel, Inc.  All rights reserved.
+=========================================================================

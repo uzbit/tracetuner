@@ -1,0 +1,261 @@
+------------------------------------------------------------------------
+README from TraceTuner 2.0.9  			           November 2003
+------------------------------------------------------------------------
+
+This directory contains the premium version of TraceTuner 2.0.9.  The
+program includes several builtin lookup tables:
+
+    ABI3700_Pop5_BigDye_v1,2
+    ABI3700_Pop6_BigDye_v1,4
+    ABI3100_Pop6_BigDye_v1,2
+    ABI377_DP (Dye Primer)
+    ABI377_DT (Dye Terminator)
+
+File TraceTunerPremium2_0.pdf contains the Manual for TraceTuner 2.0
+Premium version.
+
+IMPORTANT!!! 
+
+1) To view the PDF Manual properly, you must use Acrobat Reader version 4 
+   or higher
+
+2) We do not recommended installing TraceTuner on the PCs that directly 
+   control the ABI sequencers.
+
+If you invoke ttuner without arguments, you get a brief usage message
+
+% ttuner
+
+Version: TT_2.0.9
+usage: ttuner
+       [ -h ]
+       [ -Q ]                  [ -V ]
+       [ -nocall] [ -recalln ] [ -edited_bases        ]
+       [ -shift ]              [ -convolved ]          
+       [ -het   ]              [ -min_ratio <phr>     ]
+       [ -trim_window  <size>] [ -trim_threshold <qv> ]
+       [ -t <lookup_table>   ] [ -C <consensus_file>  ] [ -cv3   ]
+       [ -pop5  ] [ -pop6    ] [ -3100  ]  [ -377dp   ] [ -377dt ]
+       [ -ipd <dir> ]
+       { -p   | -pd   <dir> | -q   | -qd   <dir> | -qa <file> |
+         -c   | -cd   <dir> | -s   | -sd   <dir> | -sa <file> |
+         -d   | -dd   <dir>                      | -qr <file> |
+         -tal | -tald <dir> | -tab | -tabd <dir>              }
+       { <sample_file(s)>   | -id   <dir> | -if <fileoffiles> }
+where 
+    -h (Optional) Displays the detailed help message.
+
+    -Q (Optional) (quiet) Turns off ttuner's status messages.
+
+    -V (Optional) (verbose)  Specifies that TraceTuner produce additional
+        process status messages. The default (without either the -Q or -V
+        option) is level 1. The more V's entered on the command line, 
+        the higher the level of verbosity. 
+        After level 3 (-VV), there is no change in verbosity. 
+        If used in conjunction with the -Q option, the parameter 
+        that appears last on the command line takes precedence.
+
+    -nocall (Optional) This parameter disables TraceTuner base calling and 
+        sets the current sequence to the base calls that are read from the 
+        input file.  By default, the current sequence is set to the TraceTuner
+        base calls.  This parameter cannot be used together with -recalln. 
+        If you use -nocall, you will get Ns. 
+        If you don't use -nocall, you will not get Ns.
+
+    -recalln (Optional) This parameter specifies to recall Ns, but not to 
+        change, insert or delete any other bases. 
+        All bases are relocated to the positions of corresponding peaks. 
+        This option cannot be used together with -nocall.
+
+    -edited_bases (Optional) This option forces TraceTuner to read edited
+        base calls and locations from sample file(s) and "start" from them 
+        when recalling bases. By default, TraceTuner reads and starts from 
+        called bases and locations. 
+
+    -shift (Optional) This option forces TraceTuner to correct mobility shifts
+        in traces.
+
+    -convolved (Optional) This option forces TraceTuner to use the 'convolved'
+        model of peak shape instead of the 'gaussian' model, which is used by
+        default. 
+
+    -snp (Optional) Specifies that TraceTuner make heterozygous base calls. 
+        IUB Nucleotide Codes are used when making heterozygous base calls. 
+
+    -min_ratio <phr> (Optional) Specifies a threshold ratio of heights of two 
+        peaks which may be eventually called as heterozygotes. This parameter 
+        will be used only when -snp option is additionally specified.
+        If the actual ratio of heights of two peaks is less than the specified
+        threshold, then this pair of peaks will not be considered as candidate
+        for heterozygous base call. The default value for min_ratio is 0.15
+
+    -t <lookup_table> (Optional) Instructs TraceTuner to use the specified 
+        "external" calibration lookup table. This option overrides the default 
+        (automatic selection of the lookup table) as well as the options -pop5,
+        -pop6, -3100, -377dp and -377dt. To get a message indicating which 
+        table was actually used, specify -V option
+
+    -C <consensus_file> (Optional) Specifies the file which contains
+        FASTA-formatted correct/reference sequence. If either the -tal or 
+        -tald <dir> option is additionally used, then TraceTuner will
+        align the sequence of its base calls with the correct sequence and 
+        output the result into .tal file
+
+    -cv3 (Optional) This flag works only with the -c or -cd option. It forces 
+        ttuner to output version 3 of .scf files. The default output 
+        of .scf files is version 2.
+
+    -pop5 (Optional) Instructs TraceTuner to use the ABI3700_Pop5_BigDye 
+        calibration table regardless of the chemistry used to generate the 
+        processed sample file. By default, TraceTuner will automatically select 
+        the lookup table from the list of five built-in tables. 
+
+    -pop6 (Optional) Analogous to the -pop5 parameter, but for the 
+        ABI3700_Pop6_BigDye calibration table. 
+
+    -3100 (Optional) Analogous to the -pop5 parameter, but for the 
+        ABI3100_Pop6_BigDye calibration table. 
+
+    -377dp (Optional) Analogous to the -pop5 parameter, but for the ABI377_DP 
+        (Dye Primer) calibration table. 
+
+    -377dt (Optional) Analogous to the -pop5 parameter, but for the ABI377_DT 
+        (Dye Terminator) calibration table. 
+
+    -trim_window <window_size> (Optional) Specifies the size of the moving 
+        average of bases used to trim the ends of a sequence. The default size 
+        is 10. Trimming stops when the moving average of the quality values 
+        reaches min_average_quality. Trim data are stored in the .phd output 
+        file. 
+
+    -trim_threshold <min_average_quality> (Optional) Specifies the threshold 
+        for the aforementioned quality value moving average. The default value 
+        is 20. 
+
+    -p Specifies that TraceTuner output be written to .phd-formatted files in 
+        the current working (i.e. sample file) directory. Note that .phd files 
+        are needed to utilize the Viewer. 
+
+    -pd <dir> Analogous to -p, but output file is written to the specified 
+        directory. 
+
+    -q Specifies that TraceTuner write one .qual-formatted quality value output
+        file for each sample file to the sample file directory.
+
+    -qd <dir> Analogous to -q, but output file is written to the specified 
+        directory. 
+
+    -qa <file> Specifies that TraceTuner aggregate the quality value output for
+        all sample files into a single .qual-formatted output file and write 
+        the output to the specified file. 
+
+    -c Specifies that TraceTuner output results in a .scf-formatted file in the
+        sample file directory. 
+
+    -cd <dir> Analogous to -c, but output file is written to the specified 
+        directory. 
+
+    -s Specifies that TraceTuner write its (potentially) recalled bases in one 
+        FASTA-formatted sequence file for each sample file in the sample file 
+        directory. 
+
+    -sd <dir> Analogous to -s, but output file is written to the specified 
+        directory. 
+
+    -sa <file> Specifies that TraceTuner aggregate its (potentially) recalled 
+        bases for all sample files into a single FASTA-formatted sequence file 
+        containing multiple sequences and write the output to the specified 
+        file. 
+
+    -d  Specifies that TraceTuner write out a .poly file that is used for 
+        detecting polymorphic bases. 
+
+    -dd <dir> Analogous to -d, but output file is written to the specified 
+        directory. 
+
+    -qr <output_file> Specifies that TraceTuner write a report file containing 
+        statistics on the number of input files that contain bases with QV > 20
+        to the specified file. The format of the will be similar to that of 
+        qvreport.txt. 
+
+    -tal Specifies that TraceTuner align its base calls with the bases in 
+        <consensus_file> and output the results in a file with .tal extension 
+        in the sample file directory. The Viewer requires .tal files in order 
+        to display the reference sequences. 
+
+    -tald <dir> Analogous to -tal, but results are written to a file in the 
+        specified directory. 
+
+    -tab Specifies that TraceTuner output the alternative base calls in a 
+        file with .tab extension in the sample file directory. The Viewer 
+        requires .tab files in order to display TraceTuner alternative base 
+        calls. This option works only together with -snp option  
+
+    -tabd <dir> Analogous to -tab, but results are written to a file in the 
+        specified directory. 
+
+    -ipd <dir> Instructs TraceTuner to read the original base calls and 
+        locations from .phd.1-formatted file(s) rather than from sample 
+        file(s). The .phd file(s) should be located in the specified 
+        directory <phd_dir> and have name(s) which matches the name(s) 
+        of the input sample file(s). This option allows using Phred's base 
+        calls and locations or starting from them when recalling bases. 
+
+    -id <dir> Specifies that TraceTuner process every file in the specified 
+        directory. 
+
+    -if <file_of_files> Specifies that TraceTuner read file_of_files and treat 
+        each line as a sample filename. An example of a file_of_files is as 
+        follows: 
+
+        /home/username/ttuner/test_data/data_file1 
+        /home/username/ttuner/test_data/data_file2 
+        /home/username/ttuner/test_data/data_file3
+
+
+You must specify at least one of the -p, -q, -s, -c, or -qr options, but may
+specify more if you want.  If you don't want or need to use -if or -id,
+you can just provide sample file names on the command line.
+
+The distribution directory also includes the file ttuner_tools.jar.  This
+file contains the Java Launcher and Viewer.  These are described in the
+PDF file and in the manual.  The Launcher was designed for PC users so
+that they can run the basic TraceTuner options without using the MS-DOS
+command line.  It may be useful on UNIX as well as it lets you select
+input files, run TraceTuner, and then immediately run the Viewer without
+having to specify paths.
+
+The Viewer shows the original traces, the original basecalls made by the
+ABI basecaller, and the revised basecalls and quality values supplied by
+TraceTuner.
+
+To use the Launcher, make sure the ttuner executable is in your path so
+the Launcher can find it.  Assuming Java 1.3 is in your path and that 
+ttuner_tools.jar file is in your current directory, the command to start 
+the Launcher is
+
+    java -jar ttuner_tools.jar -Dhelpdocs.dir="$TTHOME/help"
+
+where "TTHOME" is an environmental variable that should have been set up 
+properly during the installation.
+
+To run the stand-alone Viewer on a single sample file / phd file combination
+the command would be
+
+    java -Dhelpdocs.dir="$TTHOME/help" -cp ttuner_tools.jar \
+	 com.paracel.tt.run.TTView <sample-file> <phd-file>
+
+The Java tools need Java version 1.3 for the UNIX platform to be utilized.
+This TraceTuner distribution does not include Java for the UNIX platforms.
+If you want to use these tools on a UNIX platform, you need to download and
+install the appropriate distribution from
+
+	http://java.sun.com/
+
+If you would like to run the tools from a PC, the file on the CD-ROM that
+is named SETUP.EXE under the ttuner2.0.9_x86-win32-4.0 is a PC-style 
+installer and does include the necessary runtime Java files for the PC.
+
+=========================================================================
+Copyright (c) 1999-2003, Paracel, Inc.  All rights reserved.
+=========================================================================
