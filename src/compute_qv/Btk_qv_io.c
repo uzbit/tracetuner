@@ -44,6 +44,7 @@
 #include <float.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "ABI_Toolkit.h"
 #include "SCF_Toolkit.h"
@@ -1326,6 +1327,138 @@ release(Contig *consensus, Contig *consensusrc, Contig *fragment,
 
     return SUCCESS;
 }
+
+	/********************************************************************************
+	 * This function writes out a FASTQ file with the (potentially) recalled
+	 * bases.  Its synopsis is:
+	 *
+	 * success = Btk_output_fastq_file(file_name, path, called_bases, quality_values,
+	 *                  num_bases, verbose)
+	 *
+	 * where
+	 *	file_name	is the name of the sample file
+	 *	path		is the path name of the directory in which to write
+	 *			the .seq file, if any (NULL means current dir)
+	 *	called_bases	is an array of base calls
+	 *	quality_values	is an array of quality values
+	 *	num_bases	is the number of elements in called_bases
+	 *	verbose		is whether to write status messages to stderr, and
+	 *			how verbosely
+	 *
+	 *	success		is SUCCESS or ERROR
+	 ********************************************************************************
+	 */
+	int
+	Btk_output_fastq_file(
+						  int FastqType,
+						  char *file_name,
+						  char *path,
+						  char *multifastqFileName,
+						  char *called_bases,
+						  uint8_t *quality_values,
+						  int num_bases,
+						  int left_trim_point,
+						  int right_trim_point,
+						  int verbose)
+	{
+		int i;
+		char qchar;
+		char *seq_name, fastq_file_name[MAXPATHLEN];
+		char sequence_string[num_bases + 1];
+		char quality_string[num_bases + 1];
+		FILE *fastq_out = NULL, *dir_out = NULL, *multi_out = NULL;
+
+		/* Use the name of the sample file, sans path, as the sequence name. */
+#ifdef __WIN32
+		if ((seq_name = strrchr(file_name, '\\')) != NULL) {
+#else
+			if ((seq_name = strrchr(file_name, '/')) != NULL) {
+#endif
+				seq_name++;
+			}
+			else {
+				seq_name = file_name;
+			}
+
+			/* Ignore any trailing N characters in called_bases */
+			strncpy( sequence_string, called_bases, num_bases );
+			sequence_string[num_bases] = 0;
+			
+			for(i=0;i<num_bases;i++)
+			{
+				/* Quality values are already integers */
+				/* Write a Sanger FASTQ file, PHRED scores with ASCII offset 33 */
+				qchar = 33 + quality_values[i];
+				//assert( (33 <= qchar) && (qchar <= 126) );
+				quality_string[i] = qchar;
+				//fprintf(stderr, "%c, %d\n", quality_string[i], quality_values[i]);
+			}
+			quality_string[num_bases] = 0; /* Explicit null terminator */
+			//fprintf(stderr, "Sequence string:\n%d, %d, %d, %s\n", (int)num_bases, (int)strlen(sequence_string), (int)strlen(quality_string), sequence_string); /* enable to print sequence string to stderr */
+			assert( num_bases == strlen(quality_string) );
+			assert( num_bases == strlen(sequence_string) );
+			assert( strlen(quality_string) == strlen(sequence_string) );
+
+			if (FastqType & NAME_DIR) {
+#ifdef __WIN32
+				sprintf(fastq_file_name, "%s\\%s.fastq", path, seq_name);
+#else
+				sprintf(fastq_file_name, "%s/%s.fastq", path, seq_name);
+#endif
+				if ((dir_out = fopen(fastq_file_name, "w")) == NULL) {
+					error(fastq_file_name, "couldn't open", errno);
+					return ERROR;
+				}
+			}
+
+			if (FastqType & NAME_FILES) {
+				sprintf(fastq_file_name, "%s.fastq", seq_name);
+				if ((fastq_out = fopen(fastq_file_name, "w")) == NULL) {
+					error(fastq_file_name, "couldn't open", errno);
+					return ERROR;
+				}
+			}
+
+			if (FastqType & NAME_MULTI) {
+				if ((multi_out = fopen(multifastqFileName, "a")) == NULL) {
+					error(multifastqFileName, "couldn't open", errno);
+					fclose(fastq_out);
+					return ERROR;
+				}
+			}
+
+			if (fastq_out) {
+				fprintf(fastq_out, "@%s %d %d %d\n%s\n+\n%s\n", seq_name, num_bases,
+						left_trim_point, right_trim_point - left_trim_point + 1,
+						sequence_string, quality_string);
+			}
+
+			if (dir_out) {
+				fprintf(dir_out, "@%s %d %d %d\n%s\n+\n%s\n", seq_name, num_bases,
+						left_trim_point, right_trim_point - left_trim_point + 1,
+						sequence_string, quality_string);
+			}
+
+			if (multi_out) {
+				fprintf(multi_out, "@%s %d %d %d\n%s\n+\n%s\n", seq_name, num_bases,
+						left_trim_point, right_trim_point - left_trim_point + 1,
+						sequence_string, quality_string);
+			}
+
+			if (fastq_out) {
+				fclose(fastq_out);
+			}
+
+			if (dir_out) {
+				fclose(dir_out);
+			}
+
+			if (multi_out) {
+				fclose(multi_out);
+			}
+
+			return SUCCESS;
+		}
 
 /********************************************************************************
  * This function writes out a ".tal" file.

@@ -92,6 +92,8 @@ static int OutputFlow;
 static int OutputFourMultiFastaFiles;
 static char MultiFastaFilesDirName[BUFLEN];
 static char multiseqsFileName[BUFLEN];
+static char multiseqFileName[BUFLEN];
+static char multifastqFileName[BUFLEN];
 static char multiqualFileName[BUFLEN];
 static char multilocsFileName[BUFLEN];
 static char multistatFileName[BUFLEN];
@@ -108,6 +110,10 @@ static int SCFType;
 static int OutputPhd;		/* whether to write .phd.1 files */
 static char PhdDirName[BUFLEN];	/* path of dir */
 static int PhdType;
+
+static int OutputFastq;		/* whether to write .fastq files */
+static char FastqDirName[BUFLEN];	/* path of dir */
+static int FastqType;
 
 static int OutputQual;		/* whether to write .qual files */
 static char QualDirName[BUFLEN];	/* path of dir */
@@ -153,10 +159,11 @@ usage(int argc, char *argv[])
     "    [ -t <lookup_table>   ][ -C <consensus_file>  ][ -cv3   ]\n"
     "    [ -indel_detect ][ -indel_resolve ][ -indloc <loc> ][ -indsize <size> ]\n"
     "    [ -3730 ][ -3700pop5 ][ -3700pop6 ][ -3100 ][ -mbace]\n"   
-    "    [ -p   | -pd   <dir> ][ -s | -sd <dir> ][ -q   | -qd   <dir> ]\n"  
-    "    [ -d   | -dd   <dir> ][ -c | -cd <dir> ][ -tab | -tabd <dir> ]\n" 
-    "    [ -hpr | -hprd <dir> ][ -qr     <file> ][ -tal | -tald <dir> ]\n"
-    "    [ -sa         <file> ][ -qa     <file> ][ -f   ][ -o   <dir> ]\n"
+    "    [ -p   | -pd   <dir> ][ -s | -sd <dir> ][ -tal | -tald <dir> ]\n"    
+    "    [ -q   | -qd   <dir> ][ -f | -fd <dir> ][ -c   | -cd   <dir> ]\n" 
+    "    [ -tab | -tabd <dir> ][ -d | -dd <dir> ][ -qr         <file> ]\n"
+    "    [ -hpr | -hprd <dir> ][ -sa     <file> ][ -qa     <file> ]\n"
+    "    [ -fa         <file> ][ -o       <dir> ]\n"
     "    { <sample_file(s)>    | -id     <dir>  | -if  <fileoffiles> }\n"
              , TT_VERSION, argv[0] );
 }
@@ -177,11 +184,12 @@ usage_dev(int argc, char *argv[])
     "    [ -raw ] [ -xgr ][ -mc ] \n"
     "    [ -indel_detect ][ -indel_resolve ][ -indloc <loc> ][ -indsize <size> ]\n"
     "    [ -3730][ -3700pop5][ -3700pop6][ -3100][ -mbace]\n"
-    "    [ -p  | -pd  <dir> ] [ -s | -sd <dir> ] [ -tip | -tipd <dir> ]\n"
-    "    [ -q  | -qd  <dir> ] [ -c | -cd <dir> ] [ -tal | -tald <dir> ]\n"
-    "    [ -d  | -dd  <dir> ] [ -qr     <file> ] [ -tab | -tabd <dir> ]\n"
-    "    [ -ipd <dir> ]   [ -hpr | -hprd <dir> ] [ -f          <file> ]\n"
-    "    [ -sa       <file> ] [ -qa     <file> ] [ -o           <dir> ]\n"
+    "    [ -p   | -pd   <dir> ] [ -s | -sd <dir> ] [ -tip | -tipd <dir> ]\n"
+    "    [ -q   | -qd   <dir> ] [ -f | -fd <dir> ] [ -c   | -cd   <dir> ]\n"
+    "    [ -tal | -tald <dir> ] [ -d | -dd <dir> ] [ -qr         <file> ]\n"
+    "    [ -tab | -tabd <dir> ] [ -ipd     <dir> ] [ -hpr | -hprd <dir> ]\n"
+    "    [ -sa         <file> ] [ -qa     <file> ] [ -fa         <file> ]\n"
+    "    [ -o           <dir> ]\n"
     "    { <sample_file(s)>   | -id     <dir>    | -if  <fileoffiles> }\n"
              , TT_VERSION, argv[0] );
 }
@@ -244,6 +252,9 @@ help_message(int argc, char *argv[])
 "                         one file per sample\n"
 "    -pd <dir>            Output .phd.1 file(s), in the specified directory,\n"
 "                         one file per sample\n"
+"    -f                   Output .fastq file(s), in the current directory\n"
+"    -fa <file>           Append .fastq file(s) to <file>\n"
+"    -fd <dir>            Output .fastq file(s), in the specified directory\n"
 "    -q                   For Sanger data, output .qual file(s) in the current \n"
 "                         directory; for 454 data, output multi-FASTA file of\n"
 "                         quality values to stdout\n"
@@ -832,6 +843,17 @@ process_sample_file(BtkLookupTable *table, ContextTable *ctable,
             Verbose)) == ERROR)
         {
             goto error;
+        }
+    }
+
+    if (OutputFastq && !options->indel_resolve) {
+       if ((r = Btk_output_fastq_file(FastqType, path,
+           FastqDirName, multifastqFileName,
+           called_bases, quality_values,
+           num_called_bases, left_trim_point, right_trim_point,
+           Verbose)) == ERROR)
+        {
+               goto error;
         }
     }
 
@@ -1509,6 +1531,9 @@ main(int argc, char *argv[])
     OutputQualRpt   = 0;
     QualDirName[0]  = '\0';
     QualType        = NAME_NONE;
+    OutputFastq     = 0;
+    FastqDirName[0] = '\0';
+    FastqType       = NAME_NONE;
     lut_name        = NULL;
     context_table   = NULL;
     options.chemistry    = NULL;
@@ -1548,6 +1573,7 @@ main(int argc, char *argv[])
     Deletion             = -3;
     multiqualFileName[0] = '\0';
     multiseqFileName[0]  = '\0';
+    multifastqFileName[0]	= '\0';
     MultiFastaFilesDirName[0] = '\0';
     status_code[0]            = '\0';
     OutputFourMultiFastaFiles = 0;
@@ -1582,6 +1608,8 @@ main(int argc, char *argv[])
              (strcmp(argv[optind], "-qd")             == 0) ||
              (strcmp(argv[optind], "-qa")             == 0) ||
              (strcmp(argv[optind], "-qr")             == 0) ||
+             (strcmp(argv[optind], "-fd")             == 0) ||
+             (strcmp(argv[optind], "-fa")             == 0) ||
              (strcmp(argv[optind], "-sd")             == 0) ||
              (strcmp(argv[optind], "-sa")             == 0) ||
              (strcmp(argv[optind], "-t" )             == 0) ||
@@ -1629,6 +1657,7 @@ main(int argc, char *argv[])
              (strcmp(argv[optind], "-mbace")        != 0) &&
              (strcmp(argv[optind], "-p")            != 0) &&
              (strcmp(argv[optind], "-q")            != 0) &&
+             (strcmp(argv[optind], "-f")            != 0) &&
              (strcmp(argv[optind], "-c")            != 0) &&
              (strcmp(argv[optind], "-d")            != 0) &&
              (strcmp(argv[optind], "-s")            != 0) &&
@@ -1755,10 +1784,29 @@ main(int argc, char *argv[])
 
             case 'f':
                 if (strcmp(args, "-f") == 0) {
-                    OutputFlow++;
-                    j = strlen(args)-1;  /* break out of inner loop */
+                    OutputFastq++;
+                    FastqType |= NAME_FILES;
+                    j = strlen(args) - 1;   /* break out of inner loop */
                     break;
                 }
+                else if (strcmp(args, "-fa") == 0) {
+                    OutputFastq++;
+                    FastqType |= NAME_MULTI;
+                    strncpy(multifastqFileName, argv[++optind],
+                            sizeof(multifastqFileName));
+                    j = strlen(args) - 1;   /* break out of inner loop */
+                    break;
+                }
+                else if (strcmp(args, "-fd") == 0) {
+                    OutputFastq++;
+                    FastqType |= NAME_DIR;
+                    strncpy(FastqDirName, argv[++optind], sizeof(FastqDirName));
+                    validateDirectory(FastqDirName, &options);
+                    j = strlen(args) - 1;   /* break out of inner loop */
+                    break;
+                }
+
+
                 switch (listtype) {
                 case 'i':
                     InputType = NAME_FILEOFFILES;
@@ -2146,7 +2194,7 @@ main(int argc, char *argv[])
         exit(2);
     }
 
-    if (OutputPhd || OutputQual || OutputFasta || 
+    if (OutputPhd || OutputQual || OutputFasta || OutputFastq ||
         OutputQualRpt || OutputSCF || OutputFourMultiFastaFiles ||
         (options.tal_dir[0] != '\0') || (options.tip_dir[0] != '\0') ||
         (options.tab_dir[0] != '\0') || (options.hpr_dir[0] != '\0') || 
@@ -2172,7 +2220,7 @@ main(int argc, char *argv[])
     fprintf(stderr, "OutputQualRpt=%d OutputAln=%d tip=%d tab=%d het=%d mix=%d poly=%d \n",
         OutputQualRpt, OutputAln, tip, tab, het, mix, poly);
 #endif
-    if (!OutputPhd     && !OutputQual  && !OutputFasta  && !OutputSCF && 
+    if (!OutputPhd     && !OutputQual  && !OutputFasta && !OutputFastq && !OutputSCF && 
         !OutputQualRpt && (options.tal_dir[0] == '\0')  && !OutputFlow &&
          (options.tip_dir[0] == '\0')  && (options.tab_dir[0] == '\0') && 
          (options.hpr_dir[0] == '\0') && !options.poly && 
@@ -2196,6 +2244,10 @@ main(int argc, char *argv[])
 
     if (multiseqFileName[0] != '\0') {
         unlink(multiseqFileName);
+    }
+
+    if (multifastqFileName[0] != '\0') {
+        unlink(multifastqFileName);
     }
 
     /*
@@ -2247,7 +2299,7 @@ main(int argc, char *argv[])
                 table = Btk_get_3730pop7_table();
                 if (Verbose > 1) {
                     fprintf(stderr,
-                             "Using a built-in 3700 Pop-6 table for this run.\n");
+                             "Using a built-in 3730 Pop-7 table for this run.\n");
                 }
             }
             else if (options.lut_type == ABI3100) {

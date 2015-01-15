@@ -131,6 +131,18 @@ Btk_output_phd_file(
     float trim_threshold,
     int verbose);
 
+extern int
+Btk_output_fastq_file(
+	int FastqType,
+	char *file_name,
+	char *path,
+	char *multiseqFileName,
+	char *called_bases,
+	uint8_t *quality_values,
+	int num_bases,
+	int left_trim_point,
+	int right_trim_point,
+    int verbose);
 
 extern int
 Btk_output_fasta_file(

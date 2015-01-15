@@ -19,7 +19,7 @@
  *************************************************************************/
 
 #define TT_SFF_MAGIC 0x2E736666
-#define MAX_BASES_LEN 1000
+#define MAX_BASES_LEN 1500
 #define SFF_VERSION "\0\0\0\1"
 #define MANIFEST_INDEX_MAGIC_NUMBER ( (((unsigned int) '.') << 24) + (((unsigned int) 'm') << 16) + (((unsigned int) 'f') << 8) + ((unsigned int) 't') )
 #define SORT_INDEX_MAGIC_NUMBER ( (((unsigned int) '.') << 24) + (((unsigned int) 's') << 16) + (((unsigned int) 'r') << 8) + ((unsigned int) 't') )
